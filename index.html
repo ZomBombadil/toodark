@@ -4176,6 +4176,18 @@ function drawFenn(g,tx,ty,t){
   drawSprS(g,FENN,PAL_F,x-7,y-16+bob,1,false);
   g.fillStyle='rgba(255,196,106,0.25)'; g.fillRect(x-10,y-20+bob,20,3);
 }
+function drawGothicArch(g,x,y,s){
+  // pointed arch frame: two arcs meeting at apex
+  g.strokeStyle='rgba(150,110,200,0.85)'; g.lineWidth=2;
+  g.beginPath();
+  g.moveTo(x-s/2,y);
+  g.quadraticCurveTo(x-s/2,y-s*0.7,x,y-s);
+  g.quadraticCurveTo(x+s/2,y-s*0.7,x+s/2,y);
+  g.stroke();
+  // steps descending into dark
+  g.fillStyle='rgba(90,60,140,0.9)';
+  for(let i=0;i<3;i++){ g.fillRect(x-s/2+3+i*2,y-2-i*4,s-6-i*4,2); }
+}
 function drawStairFig(g,tx,ty,t){
   const x=tx*TILE-cam.x, y=ty*TILE-cam.y;
   const p=0.4+0.3*Math.sin(t*3);
