@@ -196,6 +196,7 @@
     </div>
     <button id="bagBtn" class="hidden">BAG</button>
     <button id="questBtn" class="hidden">QST</button>
+    <button id="reposBtn" class="hidden">REPOS</button>
     <button id="pauseBtn" class="hidden">&#10074;&#10074;</button>
     <div id="moveBar" class="hidden"><span>DRAG BUTTONS</span><button id="moveReset">RESET DEFAULTS</button><button id="moveDone">DONE</button></div>
     <div id="pauseUI" class="overlay hidden">
@@ -2003,6 +2004,7 @@ function setState(s){
   $('combatCluster').classList.toggle('hidden',s!=='map');
   $('bagBtn').classList.toggle('hidden',s!=='map');
   $('questBtn').classList.toggle('hidden',s!=='map'); // UI-ACCESS: quest quick button
+  $('reposBtn').classList.toggle('hidden',s!=='map'); // REPOS: unstick button
   $('pauseBtn').classList.toggle('hidden',s!=='map'); // PAUSE 2026-10-07: only during gameplay
   $('dialogUI').classList.toggle('hidden',s!=='dialog');
   $('titleUI').classList.toggle('hidden',s!=='title');
@@ -5396,6 +5398,24 @@ function watchScroll(el){
 // ---- 3. quest-log quick button ----
 function openQuestLog(){ invChar=0; invMode='quest'; renderInv(); setState('inv'); AU.ui(); }
 document.getElementById('questBtn').addEventListener('pointerdown',e=>{ e.stopPropagation(); if(state==='map') openQuestLog(); });
+
+// ---- 3b. reposition (unstick) button ----
+function repositionPlayer(){
+  if(state!=='map'||!zone) return;
+  const ptx=Math.floor(player.x/16), pty=Math.floor(player.y/16);
+  // find nearest open tile within 5
+  for(let r=1;r<=5;r++){
+    for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){
+      const nx=ptx+dx, ny=pty+dy;
+      if(nx<1||ny<1||nx>=MW-1||ny>=MH-1) continue;
+      const ch=MAP[ny]&&MAP[ny][nx];
+      if(ch&&!SOLID.has(ch)){ player.x=nx*16+8; player.y=ny*16+8; updateCamera(player.x,player.y); toast('Repositioned.'); AU.ui(); return; }
+    }
+  }
+  // fallback: zone entry
+  if(zone.entry){ player.x=zone.entry.tx*16+8; player.y=zone.entry.ty*16+8; updateCamera(player.x,player.y); toast('Repositioned to entry.'); AU.ui(); }
+}
+document.getElementById('reposBtn').addEventListener('pointerdown',e=>{ e.stopPropagation(); repositionPlayer(); });
 
 // ---- 4. custom button layout ----
 const DRAG_IDS=['dpad','btnAtk','btnSpell1','btnSpell2','btnDodge','btnPotion','btnRng','bagBtn','questBtn','muteBtn','pauseBtn'];
