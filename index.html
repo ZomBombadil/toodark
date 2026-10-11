@@ -2110,8 +2110,8 @@ function nearestInteract(){
     for(const tc of (zone.torches||[])){ if(tc.lit||tc.lairB) continue; // TORCH: light prompt
       const d=Math.hypot((tc.tx+.5)*16-px,(tc.ty+.5)*16-py);
       if(d<bd+4){bd=d;best={kind:'torch',tc};} }
-    if(zone.depth===1&&!zone.lair){ const d=Math.hypot((BOSS_SPAWN.tx+.5)*16-px,((BOSS_SPAWN.ty+.5)*16+10)-py); // LAIR 2026-10-07: door only on tutorial map
-      if(d<28){best={kind:'door'};} }
+    if(zone.depth===1&&!zone.lair){ const d=Math.hypot((22.5)*16-px,(2.5)*16-py); // door at tiles (22-23,1), interact from below
+      if(d<32){best={kind:'door'};} }
   }
   return best;
 }
@@ -5418,7 +5418,7 @@ function repositionPlayer(){
 document.getElementById('reposBtn').addEventListener('pointerdown',e=>{ e.stopPropagation(); repositionPlayer(); });
 
 // ---- 4. custom button layout ----
-const DRAG_IDS=['dpad','btnAtk','btnSpell1','btnSpell2','btnDodge','btnPotion','btnRng','bagBtn','questBtn','muteBtn','pauseBtn'];
+const DRAG_IDS=['dpad','btnAtk','btnSpell1','btnSpell2','btnDodge','btnPotion','btnRng','bagBtn','questBtn','reposBtn','muteBtn','pauseBtn'];
 let moveMode=false, dragEl=null, dragOX=0, dragOY=0;
 function getLayout(){ try{ return JSON.parse(localStorage.getItem('toodark_layout')||'{}'); }catch(e){ return {}; } }
 function saveLayout(l){ try{ localStorage.setItem('toodark_layout',JSON.stringify(l)); }catch(e){} }
@@ -5500,7 +5500,7 @@ if(!SET.uimode) SET.uimode='default';
 function applyUIMode(){
   const min=(SET.uimode==='minimal');
   const show=(id,v)=>{ const el=document.getElementById(id); if(el) el.style.display=v?'':'none'; };
-  show('muteBtn',!min); show('questBtn',!min); show('btnPotion',!min);
+  show('muteBtn',!min); show('btnPotion',!min);
   const cl=document.getElementById('combatCluster');
   if(cl){ cl.style.transform=min?'scale(0.85)':''; cl.style.transformOrigin='bottom right'; }
   // minimap exempt: in-canvas, owned by the MINIMAP section (SET.map / SET.mapPos) — never touched here
