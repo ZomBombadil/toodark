@@ -4955,6 +4955,7 @@ function renderQuests(body,h,row){
   let doneAny=false;
   for(const id in player.quests){ const q=player.quests[id]; if(!q.done) continue; doneAny=true;
     const def=qDef(id);
+    if(!def) continue; // stale quest ID from older save
     row('<span style="color:#5a6a4a">'+def.name+'</span>',def.desc,[]); }
   if(!doneAny) row('<i>Nothing completed yet.</i>','Get to work, bastard.',[]);
 }
