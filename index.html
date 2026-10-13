@@ -1647,6 +1647,7 @@ let daybreakT=0;
 function lightTorch(tc,silent){
   if(!tc||tc.lit) return false;
   tc.lit=true;
+  player.torchLitTotal=(player.torchLitTotal||0)+1; // TORCH-QUEST-FIX 2026-10-12: lifetime count so torches lit before the quest is granted get retroactive credit
   qEvent('torch'); tutEvent('torch'); // QUESTS + tutorial
   const x=(tc.tx+.5)*16, y=(tc.ty+.5)*16;
   for(let i=0;i<10;i++) spawnP(x+(Math.random()-0.5)*8,y-10,(Math.random()-0.5)*30,-40-Math.random()*40,0.5,'#ff9a3a',2,-60);
@@ -1979,7 +1980,7 @@ function newGame(clsId,diffId){
     spell1:cls.spell1||'ember_volley',spell2:cls.spell2||null,
     burnT:0,silenceT:0,slowT:0,flash:0,kbx:0,kby:0,potionCd:0,
     inv:[],equip:{weapon:null,garb:null,charm:null,lantern:null},traits:[],    trophies:{bone:0,ichor:0,starmetal:0,cinder:0},camp:{},secondHeartUsed:false,
-    quests:{},tut:null,fennDisc:0, // QUESTS (added 2026-10-07)
+    quests:{},tut:null,fennDisc:0,torchLitTotal:0, // QUESTS (added 2026-10-07); TORCH-QUEST-FIX 2026-10-12: lifetime torch count resets on new game
     dir:'up',animT:0,moving:false});
   party=[]; companions=party;
   flags={}; seedBase=(Math.random()*1e9)|0;
@@ -2710,6 +2711,16 @@ function tryAttack(){
   if(player.shadowT>0)player.shadowT=0; // wraithstep consumed
   const lx=player.x+Math.cos(player.lungeA)*18, ly=player.y+Math.sin(player.lungeA)*18-8;
   sparks(lx,ly,fin?10:5,'#ffc46a');
+  // CYBER-SHINOBI 2026-10-12: katana energy trail — accent-hot leading edge fading to accent-deep, matching the swing arc
+  (function(){
+    const a0=player.lungeA, span=whirl?Math.PI:1.05, R=22, n=fin?14:10;
+    for(let i=0;i<n;i++){
+      const f=i/(n-1), a=a0-span/2+span*f+(Math.random()-0.5)*0.08;
+      const c=f>0.66?'#ff6b6b':(f>0.33?'#ff2a44':'#a01212');
+      spawnP(player.x+Math.cos(a)*R, player.y-8+Math.sin(a)*R,
+        Math.cos(a)*24, Math.sin(a)*24, 0.16+Math.random()*0.14, c, f>0.4?2:1, 0);
+    }
+  })();
   if(fin) detonateBlast(lx,ly,30,effAtk()*0.9,false,'#ffb46a');
   AU.swing(fin);
   if(fin){ shake(0.16,2.5); ringFx(player.x,player.y-8,20,'rgba(255,160,80,0.8)'); }
@@ -4817,7 +4828,16 @@ function qGrant(id,data){
   qInit();
   if(player.quests[id]&&!player.quests[id].done) return false; // already active
   player.quests[id]={n:0,st:0,done:false,data:data||{}};
+  qCatchupTorch(id); // TORCH-QUEST-FIX 2026-10-12: retroactive credit for pre-grant torches
   saveGame(); return true;
+}
+// TORCH-QUEST-FIX 2026-10-12: torches lit before LIGHTBRINGER was granted count
+// toward it the moment it is granted (his 2026-10-07 field report: no retroactive credit).
+function qCatchupTorch(id){
+  if(id!=='lightbringer') return;
+  const q=player.quests&&player.quests[id]; if(!q||q.done) return;
+  const already=player.torchLitTotal||0;
+  if(already>q.n) qProg(id,already-q.n);
 }
 function qProg(id,n){
   const q=player.quests&&player.quests[id]; if(!q||q.done) return;
@@ -5093,7 +5113,7 @@ function chComplete(ci){
 }
 function chGrant(ci){
   const C=CHAPTERS[ci]; if(!C) return;
-  for(const id of C.quests) if(!player.quests[id]) player.quests[id]={n:0,st:0,done:false,data:{}};
+  for(const id of C.quests) if(!player.quests[id]){ player.quests[id]={n:0,st:0,done:false,data:{}}; qCatchupTorch(id); } // TORCH-QUEST-FIX 2026-10-12: retroactive credit
   saveGame();
 }
 function chBackfill(){ // derive chapter state on old saves; no-op once seen
